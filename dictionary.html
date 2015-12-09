@@ -1,0 +1,55 @@
+<head>
+    <title>Advanced Japanese Dictionary</title>
+</head>
+ 
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Japanese Dictionary</h1>
+            <form class="new-task">
+                <input type="text" name="text" placeholder="Enter query" />
+            </form>
+        </header>
+        <ul>
+            {{#each tasks}}
+                {{> task}}
+            {{/each}}
+        </ul>
+    </div>
+</body>
+
+<template name="task">
+    <li class="{{#if checked}}checked{{/if}}">
+    
+        <div class="left">
+            <span class="text">{{text}}</span><br /><br />
+            <span class="yomi">{{meaning}}</span><br /><br />
+        </div>
+        <div class="right">
+        
+        <section>Definition</section>
+        {{#each definition}}
+            <p class="reading">{{reading}}</p>
+            {{#each subdef}}
+                <p class="{{classname}}">{{jtopic}}</p>
+                <p>{{etopic}}</p>
+            {{/each}}
+        {{/each}}
+        
+        <section>Accent</section>
+        {{{accent}}}
+        
+        <section>Kanji</section>
+        {{#each kanji}}
+            <p>{{this}}</p>
+            <p>{{{kanji_list this}}}</p>
+        {{/each}}
+        <section>Synonyms</section>
+        {{#if table}}
+            <label>Disambiguation table</label>
+            {{{table}}}
+        {{/if}}
+        </div>
+        <button class="delete">&times;</button>
+    </li>
+</template> 
