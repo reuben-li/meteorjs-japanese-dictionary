@@ -9,13 +9,21 @@ if (Meteor.isServer){
         var cheerio = Meteor.npmRequire('cheerio');
         Meteor.methods({
             getData: function (original_query) {
+                // test if query is romaji/english
+                if(/^[a-zA-Z0-9- ]*$/.test(original_query) == true){
+                    cresult = Meteor.http.get(
+                        "http://tangorin.com/general/"+original_query
+                    );
+                    $ = cheerio.load(cresult.content);
+                    original_query = $('rb').contents()[0]['data'];
+                }
                 // encode query for html safe Japanese characters
                 query = encodeURIComponent(original_query);
                 // get disambiguation table from Goo
                 qresult = Meteor.http.get("http://dictionary.goo.ne.jp/srch/thsrs/"+query+"/m0u/");
                 $ = cheerio.load(qresult.content);
                 var table = $('.comparisonTable').html();
-                // get accent data from OJAD
+                // get accent data from OJAD;
                 ojad_result = Meteor.http.get(
                     "http://www.gavo.t.u-tokyo.ac.jp/ojad/search/index/display:print/"+
                     "sortprefix:accent/narabi1:kata_asc/narabi2:accent_asc/narabi3:mola_asc/"+
@@ -40,14 +48,19 @@ if (Meteor.isServer){
                     $this.children('.level0, .level1').each(function(){
                         var classname = $(this).attr("class");
                         if (classname == 'level0') {
-                            var jtopic = $(this).find('.lvlNBjeL').text();
+                            //var jtopic = $(this).find('.lvlNBje tr').text();
+                            var jtopic = [];
+                            $(this).find('.lvlNBje tr').each(function(){
+                                jtopic.push($(this).text());
+                            });
                             var etopic = [];
-                            etopic.push($(this).find('.lvlNBjeL + td').text());
                         }
                         else {
                             var jtopic = $(this).children('.lvlBje').text();
                             var etopic = [];
-                            etopic.push($(this).children('.kenjeEnE').text());
+                            $(this).find('.kenjeEnE').each(function(){
+                                etopic.push($(this).text());
+                            });
                         }
                         subdef.push({ 
                             classname: classname,
@@ -77,10 +90,12 @@ if (Meteor.isServer){
                                 $ = cheerio.load(kresult.content);
                                 $('.romaji').remove();
                                 var kreading = $('.k-readings').html();
+                                var pinyin = $('span.pinyin').text();
                                 // add record to mongo kanji collection
                                 Kanji.insert({
                                     character: value,
                                     meaning: kreading,
+                                    pinyin: pinyin,
                                     createdAt: new Date() // current time
                                 });
                             }
@@ -104,11 +119,14 @@ if (Meteor.isServer){
 // client end js code
 if (Meteor.isClient) {
     Template.body.helpers({
-        tasks: function () {
-            return Tasks.find({}, {sort: {createdAt: -1}});
+        tasks: function (query) {
+            return Tasks.find({text:query}, {sort: {createdAt: -1}});
         },
         incompleteCount: function () {
             return Tasks.find({checked: {$ne: true}}).count();
+        },
+        query: function(){
+            return Session.get('query');
         }
     }); 
  
@@ -119,12 +137,13 @@ if (Meteor.isClient) {
  
             // Get value from form element
             var text = event.target.text.value;
-  
+            Session.set('query', text);
+              
             // Search for existing term
             var result_count = Tasks.find({
                 text: text
-            }).count(); 
-  
+            }).count();             
+                
             // Insert a task into the collection
             if (result_count == 0) {
                 Meteor.call('getData', text, function(error,result){
@@ -150,11 +169,19 @@ if (Meteor.isClient) {
     Template.task.helpers({
         kanji_list: function(kanji) {
             if (kanji){
-                console.log('task helper works');
                 var kanji_object = Kanji.findOne({character:kanji});
                 return kanji_object.meaning;
+                        
+            }
+        },
+        pinyin_list: function(kanji) {
+            if (kanji){
+
+                var kanji_object = Kanji.findOne({character:kanji});
+                return kanji_object.pinyin;
             }
         }
+
     });
  
     Template.task.events({

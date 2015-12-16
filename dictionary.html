@@ -1,17 +1,18 @@
 <head>
     <title>Advanced Japanese Dictionary</title>
+<meta name="viewport" content="user-scalable=no, width=device-width, maximum-scale=1, initial-scale=1, minimum-scale=1">
+
 </head>
  
 <body>
     <div class="container">
         <header>
-            <h1>Advanced Japanese Dictionary</h1>
             <form class="new-task">
-                <input type="text" name="text" placeholder="Enter query" />
+                <input type="text" name="text" placeholder="Enter Japanese term" />
             </form>
         </header>
         <ul>
-            {{#each tasks}}
+            {{#each tasks query}}
                 {{> task}}
             {{/each}}
         </ul>
@@ -27,28 +28,47 @@
         </div>
         <div class="right">
         
-        <section>Definition</section>
+        <section>
+            <h1>Definition</h1>
         {{#each definition}}
             <p class="reading">{{reading}}</p>
+            <table class="reading-table">
             {{#each subdef}}
-                <p class="{{classname}}">{{jtopic}}</p>
-                <p>{{etopic}}</p>
+                <tr>
+                    <td class="{{classname}}">{{jtopic}}</td>
+                    <td>{{etopic}}</td>
+                </tr>
             {{/each}}
+            </table>
         {{/each}}
+        </section>
+
+        <section>
+            <h1>Accent</h1>
+            {{{accent}}}
+        </section>
         
-        <section>Accent</section>
-        {{{accent}}}
+        <section class="kanji">
+            <h1>Kanji</h1>
+            <table>
+            {{#each kanji}}
+                <tr>
+                    <td class="khead">{{this}}</td>
+                    <td>{{{kanji_list this}}}</td>
+                    <td>{{pinyin_list this}}</td>
+                </tr>
+            {{/each}}
+            </table>
+        </section>
         
-        <section>Kanji</section>
-        {{#each kanji}}
-            <p>{{this}}</p>
-            <p>{{{kanji_list this}}}</p>
-        {{/each}}
-        <section>Synonyms</section>
-        {{#if table}}
-            <label>Disambiguation table</label>
-            {{{table}}}
-        {{/if}}
+        <section class="synonyms">
+            <h1>Synonyms</h1>
+            {{#if table}}
+                <p>Disambiguation table:</p>
+                {{{table}}}
+            {{/if}}
+        </section>
+        
         </div>
         <button class="delete">&times;</button>
     </li>
