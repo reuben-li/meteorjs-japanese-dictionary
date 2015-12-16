@@ -22,6 +22,11 @@ if (Meteor.isServer){
                 // get disambiguation table from Goo
                 qresult = Meteor.http.get("http://dictionary.goo.ne.jp/srch/thsrs/"+query+"/m0u/");
                 $ = cheerio.load(qresult.content);
+                if ($(".list-search-a-in").length > 0){
+                    var first_result = $(".list-search-a a").attr("href");
+                    qresult = Meteor.http.get("http://dictionary.goo.ne.jp" + first_result);
+                    $ = cheerio.load(qresult.content);
+                }
                 var table = $('.comparisonTable').html();
                 // get accent data from OJAD;
                 ojad_result = Meteor.http.get(
